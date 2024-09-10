@@ -1,3 +1,6 @@
+; Daniel Contente Romanzini S6148042
+; Rafael Sartori Vantin S6149898
+
 turtles-own [
   sugar           ;; the amount of sugar this turtle has
   metabolism      ;; the amount of sugar that each turtles loses each tick
