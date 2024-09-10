@@ -145,6 +145,7 @@ to color-agents-by-metabolism ;; turtle procedure
 end
 
 ;; Run simulation for personalized amount of ticks
+;; Example: "run-for-ticks 100" sets up the simulation and runs it for exactly 100 ticks.
 to run-for-ticks [num-ticks]
   setup
   repeat num-ticks [
