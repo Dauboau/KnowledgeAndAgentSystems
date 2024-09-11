@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<knowledge>
+	<title>Homework Status</title>
+	<description>This is an example knowledge base for tracking chore completion.</description>
+
+	<goal name="must-complete-homework">
+		<description>Does the student have to complete their chores?</description>
+		<answer value="yes"><![CDATA[The student <em>must</em> complete their chores.]]></answer>
+		<answer>The student does not have to complete their homework.</answer>
+	</goal>
+
+	<rule>
+		<description>If the student's name is Sarah, and she has unfinished assignments, she should complete her chores.</description>
+		<if>
+			<and>
+				<fact name="student-named-sarah">yes</fact>
+				<fact name="unfinished-assignments">yes</fact>
+			</and>
+		</if>
+		<then>
+			<fact name="must-complete-homework">yes</fact>
+		</then>
+	</rule>
+
+	<rule>
+		<description>Sarah must have tidied her room and completed her homework today.</description>
+		<if>
+			<or>
+				<fact name="tidied-her-room">no</fact>
+				<fact name="completed-homework">no</fact>
+			</or>
+		</if>
+		<then>
+			<fact name="unfinished-assignments">yes</fact>
+		</then>
+	</rule>
+
+	<question>
+		<description>Is the student named Sarah?</description>
+		<option>
+			<description>Yes</description>
+			<then>
+				<fact name="student-named-sarah">yes</fact>
+			</then>
+		</option>
+		<option>
+			<description>No</description>
+			<then>
+				<fact name="student-named-sarah">no</fact>
+			</then>
+		</option>
+	</question>
+
+	<question>
+		<description>Has the student completed their homework today?</description>
+		<option>
+			<description>Yes</description>
+			<then>
+				<fact name="completed-homework">yes</fact>
+			</then>
+		</option>
+		<option>
+			<description>No</description>
+			<then>
+				<fact name="completed-homework">no</fact>
+			</then>
+		</option>
+	</question>
+
+	<question>
+		<description>Has the student tidied their room today?</description>
+		<option>
+			<description>Yes</description>
+			<then>
+				<fact name="tidied-her-room">yes</fact>
+			</then>
+		</option>
+		<option>
+			<description>No</description>
+			<then>
+				<fact name="tidied-her-room">no</fact>
+			</then>
+		</option>
+	</question>
+
+</knowledge>
