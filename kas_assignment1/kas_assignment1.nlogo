@@ -6,6 +6,8 @@ turtles-own [
   metabolism      ;; the amount of sugar that each turtles loses each tick
   vision          ;; the distance that this turtle can see in the horizontal and vertical directions
   vision-points   ;; the points that this turtle can see in relative to it's current position (based on vision)
+  max-age         ;; the life expectancy this turtle has
+  age             ;; the age this turtle has
 ]
 
 patches-own [
@@ -35,12 +37,19 @@ to turtle-setup ;; turtle procedure
     initial-location = "third-quadrant"
     [
       ;; implement this block for Exercise 3.1
+      move-to one-of patches with [
+        not any? other turtles-here
+        and pxcor < 25
+        and pycor < 25
+      ]
     ]
   )
 
   set sugar random-in-range 5 25
   set metabolism random-in-range 1 4
   set vision random-in-range 1 6
+  set max-age random-in-range 60 100
+  set age 0
   ;; turtles can look horizontally and vertically up to vision patches
   ;; but cannot look diagonally at all
   set vision-points []
@@ -80,12 +89,17 @@ to go
     ifelse is-aging? ;; Using a switch as a global variable for Exercise 3.3
     [
       ;; Implement this block and add code elsewhere for Exercise 3.3
+      if age >= max-age [ die ] ;; turtle dies of natural reasons
+      set age age + 1
     ]
     [
       if sugar <= 0 [ die ] ;; turtle dies of starvation
     ]
     if is-sharing? [ turtle-share ] ;; Using a switch as a global variable for Exercise 3.2
     run visualization
+  ]
+  if is-aging? [
+    create-turtles initial-population - count turtles [ turtle-setup ]
   ]
   tick
 end
@@ -108,6 +122,41 @@ end
 
 to turtle-share ;; turtle procedure
   ;; implement this procedure yourself for Exercise 3.2
+
+  ;; Turtles give to charity only when they have got more sugar than they need to survive one tick without eating
+  if sugar > (metabolism + 1) [
+    let nearby-turtles turtles-on patches at-points vision-points
+
+    ;; The maximum amount they give is the sugar exceeding their metabolism + 1 (minimum to survive a tick without eating)
+    let max-charity-amount sugar - (metabolism + 1)
+
+    ;; They try to donate the sugar to the turtles in their field of view(community)
+    ;; Only turtles that do not have enough sugar to survive a tick can receive donations
+    let turtles-in-need nearby-turtles with [sugar < (metabolism + 1)]
+
+    if any? turtles-in-need [
+
+      let charity-amount 0
+
+      ;; The turtle tries to donate sugar enough for each turtle benefited to survive a tick without eating anything
+      ask turtles-in-need [
+        set charity-amount charity-amount + metabolism - sugar + 1
+        ifelse charity-amount < max-charity-amount[
+          set sugar metabolism + 1
+        ]
+        [
+          set sugar metabolism + 1 - (max-charity-amount - charity-amount)
+          set charity-amount max-charity-amount
+          stop
+        ]
+      ]
+
+      ;; Updates the sugar amount of the charitable turtle
+      set sugar sugar - charity-amount
+
+    ]
+  ]
+
 end
 
 to patch-recolor ;; patch procedure
@@ -242,7 +291,7 @@ CHOOSER
 visualization
 visualization
 "no-visualization" "color-agents-by-vision" "color-agents-by-metabolism"
-0
+2
 
 PLOT
 720
@@ -289,7 +338,7 @@ initial-population
 initial-population
 10
 1000
-400.0
+250.0
 10
 1
 NIL
