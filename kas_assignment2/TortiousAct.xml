@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
-
-<!-- Daniel Contente Romanzini	S6148042 -->
-<!-- Rafael Sartori Vantin	S6149898 -->
-
 <knowledge>
-    <title>Tortious Act Liability System</title>
-    <description>Determines whether a person must repair damages based on Dutch tortious act legislation.</description>
+
+	<!-- Daniel Contente Romanzini	S6148042 -->
+	<!-- Rafael Sartori Vantin	S6149898 -->
+
+    <title>Assignment 2 - Tortious Act</title>
+    <description>Determines whether a person must repair the damage suffered as a result of a tortious act.</description>
 
     <goal name="is-liable">
-        <description>Is the person liable to repair damages from a tortious act?</description>
+        <description>Is the person liable to repair the damages from a tortious act?</description>
         <answer value="yes">The person is liable to repair the damages.</answer>
         <answer value="no">The person is not liable to repair the damages.</answer>
     </goal>
 
-    <!-- Article 6:162 - Definition of a tortious act -->
+    <!-- Article 6:162 - Definition of a 'tortious act' -->
     <rule>
-        <description>If a person commits an unlawful act that can be attributed to them, and there's no justification, they are liable.</description>
+        <description>If a person commits an unlawful act that can be attributed to him and there's no justification, the person is liable.</description>
         <if>
             <and>
                 <fact name="unlawful-act">yes</fact>
@@ -28,36 +28,62 @@
         </then>
     </rule>
 
-    <!-- Article 6:164 - Children under 14 years -->
-    <rule>
-        <description>If the person is under 14 years old, they are not liable for tortious acts.</description>
+	<rule>
+        <description>
+			If a person does not commit an unlawful act against another person
+			or it can not be attributed to him
+			or there is justification,
+			the person is not liable.
+		</description>
         <if>
-            <fact name="age-under-14">yes</fact>
+            <or>
+                <fact name="unlawful-act">no</fact>
+                <fact name="attributed-to-person">no</fact>
+                <fact name="justification">yes</fact>
+			</or>
         </if>
         <then>
             <fact name="is-liable">no</fact>
         </then>
     </rule>
 
-    <!-- Article 6:165 - Persons with mental or physical disability -->
+    <!-- Article 6:164 - Children younger than 14 years -->
     <rule>
-        <description>If the person is 14 or older and has a mental or physical disability, they can still be held liable.</description>
+        <description>If the person is under 14 years old, the tortious act cannot be attributed to him.</description>
         <if>
-            <and>
-                <fact name="age-over-14">yes</fact>
-                <fact name="mental-physical-disability">yes</fact>
-            </and>
+            <fact name="age-under-14">yes</fact>
         </if>
         <then>
-            <fact name="is-liable">yes</fact>
+            <fact name="attributed-to-person">no</fact>
         </then>
     </rule>
 
-    <!-- Article 6:163 - Standard of behavior must protect against damage -->
+    <!-- Article 6:165 - Children under influence of a mental or physical disability -->
     <rule>
-        <description>If the violated standard of behavior does not intend to protect against the damage suffered, the person is not liable.</description>
+        <description>If the person is 14 or older and has a mental or physical disability, the tortious act can still be attributed to him.</description>
         <if>
-            <fact name="standard-does-not-protect-damage">yes</fact>
+            <and>
+                <fact name="age-under-14">no</fact>
+				<!-- 
+				The presence or absence of a mental or physical disability 
+				does not influence whether the tortious act can still be attributed to the person.
+				-->
+				<or>
+					<fact name="mental-physical-disability">yes</fact>
+					<fact name="mental-physical-disability">no</fact>
+				</or>
+            </and>
+        </if>
+        <then>
+            <fact name="attributed-to-person">yes</fact>
+        </then>
+    </rule>
+
+    <!-- Article 6:163 - Violated standard of behaviour must intend to offer protection against damage -->
+    <rule>
+        <description>If there is no intent to protect against the damage suffered by the victim, the person is not liable.</description>
+        <if>
+            <fact name="protect-damage-victim">no</fact>
         </if>
         <then>
             <fact name="is-liable">no</fact>
@@ -65,6 +91,22 @@
     </rule>
 
     <!-- Questions -->
+	<question>
+        <description>Did the person commit an unlawful act against another person?</description>
+        <option>
+            <description>Yes</description>
+            <then>
+                <fact name="unlawful-act">yes</fact>
+            </then>
+        </option>
+        <option>
+            <description>No</description>
+            <then>
+                <fact name="unlawful-act">no</fact>
+            </then>
+        </option>
+    </question>
+
     <question>
         <description>Is the person under 14 years old?</description>
         <option>
@@ -77,22 +119,6 @@
             <description>No</description>
             <then>
                 <fact name="age-under-14">no</fact>
-            </then>
-        </option>
-    </question>
-
-    <question>
-        <description>Is the person over 14 years old?</description>
-        <option>
-            <description>Yes</description>
-            <then>
-                <fact name="age-over-14">yes</fact>
-            </then>
-        </option>
-        <option>
-            <description>No</description>
-            <then>
-                <fact name="age-over-14">no</fact>
             </then>
         </option>
     </question>
@@ -114,38 +140,6 @@
     </question>
 
     <question>
-        <description>Did the person commit an unlawful act?</description>
-        <option>
-            <description>Yes</description>
-            <then>
-                <fact name="unlawful-act">yes</fact>
-            </then>
-        </option>
-        <option>
-            <description>No</description>
-            <then>
-                <fact name="unlawful-act">no</fact>
-            </then>
-        </option>
-    </question>
-
-    <question>
-        <description>Can the unlawful act be attributed to the person?</description>
-        <option>
-            <description>Yes</description>
-            <then>
-                <fact name="attributed-to-person">yes</fact>
-            </then>
-        </option>
-        <option>
-            <description>No</description>
-            <then>
-                <fact name="attributed-to-person">no</fact>
-            </then>
-        </option>
-    </question>
-
-    <question>
         <description>Is there justification for the unlawful act?</description>
         <option>
             <description>Yes</description>
@@ -162,17 +156,17 @@
     </question>
 
     <question>
-        <description>Does the violated standard of behavior intend to protect against the damage suffered?</description>
+        <description>Does the violated standard of behavior intend to protect against the damage suffered by the victim?</description>
         <option>
             <description>Yes</description>
             <then>
-                <fact name="standard-does-not-protect-damage">no</fact>
+                <fact name="protect-damage-victim">yes</fact>
             </then>
         </option>
         <option>
             <description>No</description>
             <then>
-                <fact name="standard-does-not-protect-damage">yes</fact>
+                <fact name="protect-damage-victim">no</fact>
             </then>
         </option>
     </question>
