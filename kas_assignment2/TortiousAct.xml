@@ -14,13 +14,18 @@
     </goal>
 
     <!-- Article 6:162 - Definition of a 'tortious act' -->
+    <!-- Article 6:163 - Violated standard of behaviour must intend to offer protection against damage -->
     <rule>
-        <description>If a person commits an unlawful act that can be attributed to him and there's no justification, the person is liable.</description>
+        <description>
+            If a person commits an unlawful act that can be attributed to him, there's no 
+            justification and there is intent to protect against the damage suffered by the victim, the person is liable.
+        </description>
         <if>
             <and>
                 <fact name="unlawful-act">yes</fact>
                 <fact name="attributed-to-person">yes</fact>
                 <fact name="justification">no</fact>
+                <fact name="protect-damage-victim">yes</fact>
             </and>
         </if>
         <then>
@@ -32,7 +37,8 @@
         <description>
 			If a person does not commit an unlawful act against another person
 			or it can not be attributed to him
-			or there is justification,
+			or there is justification
+            or there is no intent to protect against the damage suffered by the victim,
 			the person is not liable.
 		</description>
         <if>
@@ -40,6 +46,7 @@
                 <fact name="unlawful-act">no</fact>
                 <fact name="attributed-to-person">no</fact>
                 <fact name="justification">yes</fact>
+                <fact name="protect-damage-victim">no</fact>
 			</or>
         </if>
         <then>
@@ -79,20 +86,10 @@
         </then>
     </rule>
 
-    <!-- Article 6:163 - Violated standard of behaviour must intend to offer protection against damage -->
-    <rule>
-        <description>If there is no intent to protect against the damage suffered by the victim, the person is not liable.</description>
-        <if>
-            <fact name="protect-damage-victim">no</fact>
-        </if>
-        <then>
-            <fact name="is-liable">no</fact>
-        </then>
-    </rule>
-
     <!-- Questions -->
+
 	<question>
-        <description>Did the person commit an unlawful act against another person?</description>
+        <description>Did the person violate someone's rights or acted/omitted in violation of a duty imposed by law?</description>
         <option>
             <description>Yes</description>
             <then>
@@ -103,6 +100,22 @@
             <description>No</description>
             <then>
                 <fact name="unlawful-act">no</fact>
+            </then>
+        </option>
+    </question>
+
+    <question>
+        <description>Does the violated standard of behavior intend to protect against the damage suffered by the victim?</description>
+        <option>
+            <description>Yes</description>
+            <then>
+                <fact name="protect-damage-victim">yes</fact>
+            </then>
+        </option>
+        <option>
+            <description>No</description>
+            <then>
+                <fact name="protect-damage-victim">no</fact>
             </then>
         </option>
     </question>
@@ -151,22 +164,6 @@
             <description>No</description>
             <then>
                 <fact name="justification">no</fact>
-            </then>
-        </option>
-    </question>
-
-    <question>
-        <description>Does the violated standard of behavior intend to protect against the damage suffered by the victim?</description>
-        <option>
-            <description>Yes</description>
-            <then>
-                <fact name="protect-damage-victim">yes</fact>
-            </then>
-        </option>
-        <option>
-            <description>No</description>
-            <then>
-                <fact name="protect-damage-victim">no</fact>
             </then>
         </option>
     </question>
