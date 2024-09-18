@@ -8,9 +8,9 @@
     <description>Determines whether a person must repair the damage suffered as a result of a tortious act.</description>
 
     <goal name="is-liable">
-        <description>Is the person liable to repair the damages from a tortious act?</description>
-        <answer value="yes">The person is liable to repair the damages.</answer>
-        <answer value="no">The person is not liable to repair the damages.</answer>
+        <description>Is the person liable to repair the damages from the tortious act?</description>
+        <answer value="yes">The person is liable for the repair of the damages.</answer>
+        <answer value="no">The person is not liable for the repair of the damages.</answer>
     </goal>
 
     <!-- Article 6:162 - Definition of a 'tortious act' -->
