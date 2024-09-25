@@ -261,6 +261,22 @@ end
 ;; ADD code here
 to my-strat [play-history play-partner-history]
   set num-my-strat-games num-my-strat-games + 1
+  ifelse (empty? play-partner-history) [
+    set action COOPERATE    ;; cooperate on the first round
+  ] [
+    let partner-last-action item (length play-partner-history - 1) play-partner-history
+    ifelse (partner-last-action = COOPERATE) [
+      set action COOPERATE    ;; if the partner cooperated last time, cooperate
+    ] [
+      ;; With a probability of 0.1, forgive defection and cooperate
+      let choice random 10
+      ifelse (choice = 0) [
+        set action COOPERATE    ;; forgive and cooperate
+      ] [
+        set action DEFECT       ;; retaliate by defecting
+      ]
+    ]
+  ]
 end
 
 
