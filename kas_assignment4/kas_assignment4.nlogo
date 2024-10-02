@@ -15,7 +15,8 @@ traders-own [
   product
   agreedBuyPrice      ;maps each of the four products to the latest agreed buy-price
   estimatedBuyPrice   ;maps each of the four products to an estimated buy-price
-  estimatedSellPrice  ;maps mapping each of the four products to an estimated sell-price
+  agreedSellPrice     ;maps each of the four products to the latest agreed sell-price
+  estimatedSellPrice  ;maps each of the four products to an estimated sell-price
   interactionRange
 ]
 
@@ -65,10 +66,12 @@ TO SETUP
     set estimatedBuyPrice table:make
     set estimatedSellPrice table:make
     set agreedBuyPrice table:make
+    set agreedSellPrice table:make
     foreach products [ [prd] ->
       table:put estimatedBuyPrice prd (random 50) + 25
       table:put estimatedSellPrice prd (random 50) + 25
       table:put agreedBuyPrice prd 0
+      table:put agreedSellPrice prd 0
     ]
     set color black
   ]
@@ -143,6 +146,7 @@ TO GO
       buyFromProducer
     ] state = "SELL_TO_RETAILER" [
       ; Just wait for confirmation messages mainly, or implement this yourself
+      sellToRetailer
     ])
   ]
 
@@ -253,10 +257,14 @@ end
 
 to buyFromProducer
 
+  ; Send a message to request to buy the desired product
+
   let desiredProduct product
   let closest_producer min-one-of producers with [producedProduct = desiredProduct] [distance myself]
 
   let message createMessage "buy-product" who desiredProduct 0
+
+  sendMessage closest_producer message
 
 end
 
@@ -276,7 +284,12 @@ end
 
 to sellToRetailer
 
-  ; Implement!!!!!!!
+  ; Send a message to request to sell the product being carried
+
+  let closest_retailer min-one-of retailers [distance myself]
+  let message createMessage "sell-product" who product 0
+
+  sendMessage closest_retailer message
 
 end
 
@@ -294,7 +307,7 @@ to handleMessagesTrader
     ; Quote from producer received:
     if messageContent = "producer-price" [
 
-      ; If the estimated buying price estimate is equal or higher than the offered price (messageNumber), the trader accepts to buy the goods from the producer
+      ; If the estimated buying price is equal or higher than the offered price (messageNumber), the trader accepts to buy the goods from the producer
       ; If that is not the case, the trader increases its estimatedBuyPrice and chooses a new buying goal
       ifelse messageNumber <= table:get estimatedBuyPrice messageProduct[
         table:put agreedBuyPrice messageProduct messageNumber
@@ -327,29 +340,39 @@ to handleMessagesTrader
     ]
 
 
-    ; Caso a mensagem venha do varejista
+
+    ; Quote response from retailer
     if messageContent = "price-offer" [
+
+      ; If the estimated selling price is equal or higher than the offered price (messageNumber), the trader accepts to sell the goods to the retailer
+      ; If that is not the case, the trader decreases its estimatedSellPrice and chooses a new buying goal
       ifelse messageNumber >= table:get estimatedSellPrice messageProduct [
-        ; Venda bem-sucedida para o varejista
-        set state "CHOOSE_PRODUCT"
-        ; Atualizar a estimativa de preço de venda
-        table:put estimatedSellPrice messageProduct messageNumber
-        ; Vender o produto e aumentar stock do retailer
-
-        let retailerNegotiating (turtle messageSenderID)
-        ask retailerNegotiating [
-          let currentStock table:get stocks messageProduct
-          table:put stocks messageProduct (currentStock + saleQuantity)
-        ]
-
+        table:put agreedSellPrice messageProduct messageNumber
+        set state "SELL_TO_RETAILER"
       ]
-      ; Se o preço for menor que a estimativa de venda, diminuir a estimativa de preço
       [
         table:put estimatedSellPrice messageProduct (table:get estimatedSellPrice messageProduct - 1)
-        ; Descartar o produto, pois o trader não conseguiu vendê-lo
-        ; discardProduct messageProduct
         set state "CHOOSE_PRODUCT"
       ]
+    ]
+
+    ; Transaction response from retailer received:
+    if messageContent = "retailer-buy" [
+
+      ; If the messageNumber in the response from the retailer is 1, there is space enough in the stock and the transaction is successful
+      ; If that is the case, the trader chooses a new buying goal
+      if messageNumber = 1[
+        table:put estimatedSellPrice messageProduct (table:get agreedSellPrice messageProduct)
+        set state "CHOOSE_PRODUCT"
+      ]
+
+      ; If the messageNumber in the response from the retailer is -1, there is no space enough in the stock and the transaction failed
+      ; If that is the case, the trader reduces its estimatedSellPrice and chooses a new buying goal (the product is therefore discarded as a consequence)
+      if messageNumber = -1[
+        table:put estimatedSellPrice messageProduct (table:get estimatedSellPrice messageProduct - 1)
+        set state "CHOOSE_PRODUCT"
+      ]
+
     ]
 
   ]
@@ -370,16 +393,29 @@ to handleMessagesRetailer
     ; IMPLEMENT THIS AS PART OF QUESTION 1
     ;****************************************
 
-    ; Se a mensagem for uma solicitação de preço
+    ; If the message topic is to request a price, the retailer sends it to the trader who requested it
     if messageContent = "request-price" [
-      ; Obter o preço atual do produto solicitado
       let product-price table:get prices messageProduct
-
-      ; Criar uma mensagem de resposta com o preço atual
       let messageToSend createMessage "price-offer" who messageProduct product-price
-
-      ; Enviar a mensagem de volta ao trader que solicitou o preço
       sendMessage turtle messageSenderID messageToSend
+    ]
+
+    ; If the message topic is to sell a product, the retailer checks if it has enough space in the stock
+    ; If it has, it increases its stock amount and returns a successful transaction message to the trader
+    ; In case that is not true, a failed transaction message is sent to the trader
+    if messageContent = "sell-product" [
+
+      let stockSpace (100 - table:get stocks messageProduct)
+      ifelse stockSpace >= saleQuantity [
+        table:put stocks messageProduct (table:get stocks messageProduct + saleQuantity)
+        let response createMessage "retailer-buy" who messageProduct 1
+        sendMessage (turtle messageSenderID) response
+      ]
+      [
+        let response createMessage "retailer-buy" who messageProduct -1
+        sendMessage (turtle messageSenderID) response
+      ]
+
     ]
 
   ]
@@ -445,6 +481,15 @@ end
 
 to sendMessage [receiver message]
   ask receiver  [ set messageQueue lput  message messageQueue ]
+end
+
+;; Run simulation for personalized amount of ticks
+;; Example: "run-for-ticks 100" sets up the simulation and runs it for exactly 100 ticks.
+to run-for-ticks [num-ticks]
+  setup
+  repeat num-ticks [
+    go
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -663,7 +708,7 @@ numberTraders
 numberTraders
 0
 200
-20.0
+30.0
 1
 1
 NIL
