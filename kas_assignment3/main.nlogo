@@ -1,3 +1,6 @@
+; Daniel Contente Romanzini S6148042
+; Rafael Sartori Vantin S6149898
+
 ;; Code adapted from Wilensky, U. (2002). NetLogo PD N-Person Iterated model.
 ;; http://ccl.northwestern.edu/netlogo/models/PDN-PersonIterated.
 ;; Center for Connected Learning and Computer-Based Modeling,
