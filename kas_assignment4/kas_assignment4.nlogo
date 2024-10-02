@@ -13,6 +13,7 @@ traders-own [
   messageQueue
   state
   product
+  agreedBuyPrice      ;maps each of the four products to the latest agreed buy-price
   estimatedBuyPrice   ;maps each of the four products to an estimated buy-price
   estimatedSellPrice  ;maps mapping each of the four products to an estimated sell-price
   interactionRange
@@ -63,9 +64,11 @@ TO SETUP
     ;Initialize the estimated buy and sell prices somewhat randomly
     set estimatedBuyPrice table:make
     set estimatedSellPrice table:make
+    set agreedBuyPrice table:make
     foreach products [ [prd] ->
       table:put estimatedBuyPrice prd (random 50) + 25
       table:put estimatedSellPrice prd (random 50) + 25
+      table:put agreedBuyPrice prd 0
     ]
     set color black
   ]
@@ -137,6 +140,7 @@ TO GO
       negotiateSale
     ] state = "BUY_FROM_PRODUCER" [
       ; Just wait for confirmation messages mainly, or implement this yourself
+      buyFromProducer
     ] state = "SELL_TO_RETAILER" [
       ; Just wait for confirmation messages mainly, or implement this yourself
     ])
@@ -187,6 +191,7 @@ TO GO
 end
 
 to chooseProduct
+
   ifelse chooseTheBest [
     let highestProfit -100000000000000
     let bestProduct "None"
@@ -198,6 +203,7 @@ to chooseProduct
       ]
     ]
     set product bestProduct
+
   ] [
     ;****************************************
     ; IMPLEMENT THIS AS PART OF QUESTION 5
@@ -237,10 +243,20 @@ to negotiateBuy
   ; Select a producer to contact
   ; Send a message to request the price of the desired product
 
-  ; Choose the closest producer to negotiate the price to buy goods
-  let closest_producer min-one-of producers [distance myself]
-  let message createMessage "request-price" who product 0 ;price is 0
+  let desiredProduct product
+  let closest_producer min-one-of producers with [producedProduct = desiredProduct] [distance myself]
+  let message createMessage "request-price" who desiredProduct 0
+
   sendMessage closest_producer message
+
+end
+
+to buyFromProducer
+
+  let desiredProduct product
+  let closest_producer min-one-of producers with [producedProduct = desiredProduct] [distance myself]
+
+  let message createMessage "buy-product" who desiredProduct 0
 
 end
 
@@ -258,6 +274,12 @@ to negotiateSale
 
 end
 
+to sellToRetailer
+
+  ; Implement!!!!!!!
+
+end
+
 to handleMessagesTrader
   foreach messageQueue [ [message] ->
     let messageContent table:get message "content"
@@ -269,21 +291,41 @@ to handleMessagesTrader
     ; IMPLEMENT THIS AS PART OF QUESTION 1
     ;****************************************
 
+    ; Quote from producer received:
     if messageContent = "producer-price" [
-      ifelse messageNumber <= table:get estimatedBuyPrice messageProduct [
-        ; Successful purchase
-        set state "MOVE_TO_RETAILER"
-        ; update buy price estimate
-        table:put estimatedBuyPrice messageProduct messageNumber
+
+      ; If the estimated buying price estimate is equal or higher than the offered price (messageNumber), the trader accepts to buy the goods from the producer
+      ; If that is not the case, the trader increases its estimatedBuyPrice and chooses a new buying goal
+      ifelse messageNumber <= table:get estimatedBuyPrice messageProduct[
+        table:put agreedBuyPrice messageProduct messageNumber
+        set state "BUY_FROM_PRODUCER"
       ]
-      ;else
       [
-        ; Increase buy price estimate
         table:put estimatedBuyPrice messageProduct (table:get estimatedBuyPrice messageProduct + 1)
         set state "CHOOSE_PRODUCT"
       ]
 
     ]
+
+    ; Transaction response from producer received:
+    if messageContent = "producer-sell" [
+
+      ; If the messageNumber in the response from the producer is 1, there is stock enough and the transaction is successful
+      ; If that is the case, the estimatedBuyPrice is updated with the agreedBuyPrice
+      if messageNumber = 1[
+        table:put estimatedBuyPrice messageProduct (table:get agreedBuyPrice messageProduct)
+        set state "MOVE_TO_RETAILER"
+      ]
+
+      ; If the messageNumber in the response from the producer is -1, there is no stock enough and the transaction failed
+      ; If that is the case, the trader increases its estimatedBuyPrice and chooses a new buying goal
+      if messageNumber = -1[
+        table:put estimatedBuyPrice messageProduct (table:get estimatedBuyPrice messageProduct + 1)
+        set state "CHOOSE_PRODUCT"
+      ]
+
+    ]
+
 
     ; Caso a mensagem venha do varejista
     if messageContent = "price-offer" [
@@ -292,8 +334,14 @@ to handleMessagesTrader
         set state "CHOOSE_PRODUCT"
         ; Atualizar a estimativa de preço de venda
         table:put estimatedSellPrice messageProduct messageNumber
-        ; Vender o produto e remover do estoque do trader
-        ; sellProduct messageProduct messageNumber
+        ; Vender o produto e aumentar stock do retailer
+
+        let retailerNegotiating (turtle messageSenderID)
+        ask retailerNegotiating [
+          let currentStock table:get stocks messageProduct
+          table:put stocks messageProduct (currentStock + saleQuantity)
+        ]
+
       ]
       ; Se o preço for menor que a estimativa de venda, diminuir a estimativa de preço
       [
@@ -352,13 +400,31 @@ to handleMessagesProducer
     ; IMPLEMENT THIS AS PART OF QUESTION 1
     ;****************************************
 
-    ; If the message topic is to request a price, the producer sends it to who requested it
+    ; If the message topic is to request a price, the producer sends it to the trader who requested it
     if messageContent = "request-price" [
       let price sellPrice
-      let stockAvailable stock
       let response createMessage "producer-price" who messageProduct price
       sendMessage (turtle messageSenderID) response
     ]
+
+    ; If the message topic is to buy a product, the producer checks if it has enough stock
+    ; If it has, it reduces its stock amount and returns a successful transaction message to the trader
+    ; In case that is not true, a failed transaction message is sent to the trader
+    if messageContent = "buy-product" [
+
+      let stockAvailable stock
+      ifelse stockAvailable >= saleQuantity [
+        set stock (stockAvailable - saleQuantity)
+        let response createMessage "producer-sell" who messageProduct 1
+        sendMessage (turtle messageSenderID) response
+      ]
+      [
+        let response createMessage "producer-sell" who messageProduct -1
+        sendMessage (turtle messageSenderID) response
+      ]
+
+    ]
+
 
   ]
   ;empty the message queue
@@ -597,7 +663,7 @@ numberTraders
 numberTraders
 0
 200
-30.0
+20.0
 1
 1
 NIL
