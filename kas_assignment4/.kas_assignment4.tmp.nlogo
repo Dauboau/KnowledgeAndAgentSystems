@@ -187,6 +187,7 @@ TO GO
 end
 
 to chooseProduct
+
   ifelse chooseTheBest [
     let highestProfit -100000000000000
     let bestProduct "None"
@@ -198,6 +199,7 @@ to chooseProduct
       ]
     ]
     set product bestProduct
+
   ] [
     ;****************************************
     ; IMPLEMENT THIS AS PART OF QUESTION 5
@@ -287,7 +289,7 @@ to handleMessagesTrader
       [
         ; Increase buy price estimate
         table:put estimatedBuyPrice messageProduct (table:get estimatedBuyPrice messageProduct + 1)
-        set state "CHOOSE_PRODUCT"
+        ;set state "CHOOSE_PRODUCT"
       ]
 
     ]
@@ -302,7 +304,10 @@ to handleMessagesTrader
         ; Vender o produto e aumentar stock do retailer
 
         let retailerNegotiating (turtle messageSenderID)
-
+        ask retailerNegotiating [
+          let currentStock table:get stocks messageProduct
+          table:put stocks messageProduct (currentStock + saleQuantity)
+        ]
 
       ]
       ; Se o preço for menor que a estimativa de venda, diminuir a estimativa de preço
@@ -607,7 +612,7 @@ numberTraders
 numberTraders
 0
 200
-30.0
+5.0
 1
 1
 NIL
