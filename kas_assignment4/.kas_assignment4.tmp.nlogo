@@ -275,6 +275,13 @@ to handleMessagesTrader
         set state "MOVE_TO_RETAILER"
         ; update buy price estimate
         table:put estimatedBuyPrice messageProduct messageNumber
+
+        ; Handle producer stock reduction
+        let producerNegotiating (turtle messageSenderID)
+        ask producerNegotiating [
+          set stock stock - saleQuantity ; Reduzir o estoque do produtor pelo quantity vendido
+        ]
+
       ]
       ;else
       [
@@ -292,8 +299,11 @@ to handleMessagesTrader
         set state "CHOOSE_PRODUCT"
         ; Atualizar a estimativa de preço de venda
         table:put estimatedSellPrice messageProduct messageNumber
-        ; Vender o produto e remover do estoque do trader
-        ; sellProduct messageProduct messageNumber
+        ; Vender o produto e aumentar stock do retailer
+
+        let retailerNegotiating (turtle messageSenderID)
+
+
       ]
       ; Se o preço for menor que a estimativa de venda, diminuir a estimativa de preço
       [
@@ -489,7 +499,7 @@ stockDecreaseRetailer
 stockDecreaseRetailer
 0.1
 5
-1.0
+0.1
 0.1
 1
 NIL
