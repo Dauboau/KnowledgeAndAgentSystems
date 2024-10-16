@@ -1,0 +1,17 @@
+go_to_cinema
+go_to_park
+go_to_beach
+windy
+rainy
+umbrella
+#
+go_to_cinema go_to_park
+go_to_cinema go_to_beach
+go_to_park go_to_cinema
+go_to_park go_to_beach
+go_to_beach go_to_cinema
+go_to_beach go_to_park
+windy go_to_beach
+rainy go_to_park
+rainy go_to_beach
+umbrella rainy
