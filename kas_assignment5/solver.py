@@ -52,19 +52,46 @@ def is_conflict_free_set(arguments: set[Argument]) -> bool:
 
 
 def is_admissible_set(arguments: set[Argument]) -> bool:
-    raise NotImplementedError("You have to implement this function yourself!")
+    if not is_conflict_free_set(arguments):
+        return False
+    for argument in arguments:
+        if argument.label == "IN":
+            for attacker in argument.attackers:
+                # If attacker is labeled OUT, check if it's defeated by an IN argument
+                if attacker.label != "OUT" and not any(a.label == "IN" for a in attacker.attackers):
+                    return False
+    return True
+
 
 
 def is_complete_extension(arguments: set[Argument]) -> bool:
-    raise NotImplementedError("You have to implement this function yourself!")
+    if not is_admissible_set(arguments):
+        return False
+    for argument in arguments:
+        if argument.label == "UNLABELED":
+            # An argument should be labeled IN if it's defended by the set
+            if all(attacker.label == "OUT" for attacker in argument.attackers):
+                return False
+    return True
+
 
 
 def is_stable_extension(arguments: set[Argument]) -> bool:
-    raise NotImplementedError("You have to implement this function yourself!")
+    if not is_conflict_free_set(arguments):
+        return False
+    for argument in arguments:
+        if argument.label == "OUT" and not any(a.label == "IN" for a in argument.attackers):
+            return False
+    return True
+
 
 
 def find_extensions(arguments: set[Argument], extension: str) -> None:
     unlabeled_arguments = [arg for arg in arguments if arg.label == "UNLABELED"]
+
+    if not is_conflict_free_set(arguments):
+        return
+
     if len(unlabeled_arguments) == 0:
         # All arguments got assigned a label
         # Check if current label assignment is a solution
