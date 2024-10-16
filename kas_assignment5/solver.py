@@ -1,5 +1,7 @@
-import sys
+# Daniel Contente Romanzini S6148042
+# Rafael Sartori Vantin S6149898
 
+import sys
 
 class Argument:
     """ An argument stores a name, label as well as the attacked and attacking arguments """
